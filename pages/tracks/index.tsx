@@ -11,13 +11,13 @@ const Index = () => {
     const router = useRouter()
     const dispatch = useDispatch<AppDispatch>();
     const tracks = useSelector(tracksState)
-    const error = useSelector(errorState)
+    // const error = useSelector(errorState)
 
-    if (error) {
-        return <MainLayout>
-            <h1>{error}</h1>
-        </MainLayout>
-    }
+    // if (error) {
+    //     return <MainLayout>
+    //         <h1>{error}</h1>
+    //     </MainLayout>
+    // }
 
     useEffect(() => {
         dispatch(fetchTracks());

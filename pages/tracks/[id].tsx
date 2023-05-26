@@ -3,12 +3,12 @@ import { ITrack } from "../../types/track";
 import MainLayout from "../../layouts/MainLayout";
 import { Button, Grid, TextField } from "@mui/material";
 import { useRouter } from "next/router";
-import axios from "axios";
 import { useInput } from "../../hooks/useInput";
-import { useSelector } from 'react-redux';
-import { active } from '@/store/reducers/playerReducer';
 import { client } from '@/api/client';
 import { trackQuery } from '@/api/clientQueries';
+import { useDispatch } from 'react-redux';
+import { addComent } from '@/store/reducers/trackReducer';
+import { AppDispatch } from '@/store';
 
 interface TrackPageProps {
     serverTrack: ITrack
@@ -17,6 +17,7 @@ interface TrackPageProps {
 const TrackPage: React.FC<TrackPageProps> = ({ serverTrack }) => {
     const [track, setTrack] = useState<ITrack>()
     const router = useRouter()
+    const dispatch = useDispatch<AppDispatch>()
     const username = useInput('')
     const text = useInput('')
     useEffect(() => {
@@ -41,17 +42,20 @@ const TrackPage: React.FC<TrackPageProps> = ({ serverTrack }) => {
         }
     }, [router])
 
-    const addComment = async () => {
-        try {
-            const response = await axios.post('http://localhost:5000/tracks/comment', {
-                username: username.value,
-                text: text.value,
-                trackId: router?.query?.id
-            })
-        } catch (e) {
-            console.log(e)
+    const addCommentHandler = () => {
+        if (username && text) {
+            dispatch(addComent({
+                _id: router?.query?.id, comment: {
+                    username: username.value,
+                    text: text.value,
+                    track: { _type: 'commentTo', _ref: router?.query?.id }
+                }
+            }))
+            username.value = ""
+            text.value = ""
+            router.reload()
         }
-    }
+    };
 
     return (
         <MainLayout
@@ -75,7 +79,23 @@ const TrackPage: React.FC<TrackPageProps> = ({ serverTrack }) => {
             </Grid>
             <h2>Слова в треке</h2>
             <p>{track?.text}</p>
-            <h3>Комментарии</h3>
+            <h3 style={{ marginBlockStart: '0', marginBlockEnd: '0' }}>Комментарии</h3>
+            <div style={{
+                padding: "5px 10px",
+                margin: "20px 0"
+            }} >
+                {track?.comments?.map(comment =>
+                    <div
+                        style={{
+                            padding: "5px 10px",
+                            borderBottom: "1px solid black"
+                        }}
+                        key={comment._key}>
+                        <div>Автор - {comment.username}</div>
+                        <div>Комментарий - {comment.text}</div>
+                    </div>
+                )}
+            </div>
             <Grid container>
 
                 <TextField
@@ -90,16 +110,9 @@ const TrackPage: React.FC<TrackPageProps> = ({ serverTrack }) => {
                     multiline
                     rows={4}
                 />
-                <Button onClick={addComment}>Отправить</Button>
+                <Button onClick={addCommentHandler}>Отправить</Button>
             </Grid>
-            <div>
-                {track?.comments?.map(comment =>
-                    <div>
-                        <div>Автор - {comment.username}</div>
-                        <div>Комментарий - {comment.text}</div>
-                    </div>
-                )}
-            </div>
+
         </MainLayout>
     );
 };

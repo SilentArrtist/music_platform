@@ -13,11 +13,8 @@ export const trackQuery = (trackId) => {
         listens,
         comments[]{
             _key,
-            coment -> {
-                _id,
-                username,
-                text,
-            }
+            username,
+            text,
         }
     }`;
     return query;

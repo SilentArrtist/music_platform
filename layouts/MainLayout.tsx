@@ -27,7 +27,7 @@ const MainLayout: React.FC<MainLayoutProps>
                     <meta name="viewport" content="width=device-width, initial-scale=1" />
                 </Head>
                 <Navbar />
-                <div style={{ margin: '90px auto 0 auto', maxWidth: "1300px" }}>
+                <div style={{ margin: '90px auto 0 auto', padding: '0 20px', maxWidth: "1300px" }}>
                     {children}
                 </div>
                 <Player />

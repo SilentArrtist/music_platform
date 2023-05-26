@@ -4,8 +4,8 @@ import { TrackState } from "../../types/track";
 import { ITrack } from '@/types/track';
 import { RootState } from '..';
 import { client } from '../../api/client'
-import { feedQuery } from '../../api/clientQueries'
-
+import { feedQuery, trackQuery } from '../../api/clientQueries'
+import { v4 } from 'uuid'
 const initialState: TrackState = {
     tracks: [],
     error: '',
@@ -33,6 +33,29 @@ export const fetchTracks = createAsyncThunk(
         });
 
         return formatedData;
+    }
+)
+
+export const updateListens = createAsyncThunk(
+    'track/updateListens',
+    async function (_id: any) {
+        const track = await client.fetch(trackQuery(_id));
+        client
+            .patch(_id)
+            .set({ listens: track[0].listens + 1 })
+            .commit()
+    }
+)
+
+export const addComent = createAsyncThunk(
+    'track/addComent',
+    async function ({ _id, comment }: any) {
+        client
+            .patch(_id)
+            .setIfMissing({ comments: [] })
+            .insert('after', 'comments[-1]', [{ ...comment, _key: v4() }])
+            .commit()
+            .then(res => console.log(res))
     }
 )
 

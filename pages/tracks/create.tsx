@@ -6,12 +6,17 @@ import FileUpload from "../../components/FileUpload";
 import { useInput } from "../../hooks/useInput";
 import axios from "axios";
 import { useRouter } from "next/router";
-
+import { v4 } from 'uuid'
+import { client } from '@/api/client';
+import { SanityAssetDocument, SanityImageAssetDocument } from '@sanity/client';
+import { log } from 'console';
 const Create = () => {
     const [activeStep, setActiveStep] = useState(0)
     const [picture, setPicture] = useState<any>(null)
     const [pictureSrc, setPictureSrc] = useState<string>("")
+    const [pictureAsset, setPictureAsset] = useState<any>(null)
     const [audio, setAudio] = useState<any>(null)
+    const [audioAsset, setAudioAsset] = useState<any>(null)
     const name = useInput('')
     const artist = useInput('')
     const text = useInput('')
@@ -22,29 +27,77 @@ const Create = () => {
         const selectedFile = event;
         setPicture(event)
         const reader = new FileReader();
-
-        reader.onload = function (event: any) {
-            setPictureSrc(event.target.result)
+        reader.onload = function (e: any) {
+            setPictureSrc(e.target.result)
+            client.assets
+                .upload('image', event, { contentType: event.type, filename: event.name })
+                .then((document) => {
+                    setPictureAsset(document)
+                })
+                .catch((error) => {
+                    console.log('Upload failed:', error.message);
+                });
         };
-
         reader.readAsDataURL(selectedFile);
     }
-    const next = () => {
-        if (name.value.length <= 0 || artist.value.length <= 0 || text.value.length <= 0) return;
-        if (picture === null) return;
-        if (audio === null) return;
+
+
+    const onAudioSelected = (event: any) => {
+        if (!event) return;
+        setAudio(event);
+        console.log(event);
+
+        client.assets
+            .upload('file', event, { contentType: event.type, filename: event.name })
+            .then((document) => {
+                setAudioAsset(document);
+            })
+            .catch((error) => {
+                console.log('Upload failed:', error.message);
+            });
+    }
+
+    const next = async () => {
+        if (activeStep === 0) {
+            if (name.value.length <= 0 || artist.value.length <= 0 || text.value.length <= 0) return;
+        }
+        if (activeStep === 1) {
+            if (picture === null) return;
+        }
         if (activeStep !== 2) {
             setActiveStep(prev => prev + 1)
         } else {
-            const formData = new FormData()
-            formData.append('name', name.value)
-            formData.append('text', text.value)
-            formData.append('artist', artist.value)
-            formData.append('picture', picture)
-            formData.append('audio', audio)
-            axios.post('http://localhost:5000/tracks', formData)
-                .then(resp => router.push('/tracks'))
-                .catch(e => console.log(e))
+            if (audio === null || pictureAsset === null || audioAsset === null) return;
+
+            const doc = {
+                _id: v4(),
+                _type: 'track',
+                name: name.value,
+                text: text.value,
+                artist: artist.value,
+                listens: 0,
+                picture: {
+                    _type: 'image',
+                    asset: {
+                        _type: 'reference',
+                        _ref: pictureAsset?._id,
+                    },
+                },
+                audio: {
+                    _type: 'fileAsset',
+                    asset: {
+                        _type: 'reference',
+                        _ref: audioAsset?._id,
+                    },
+                },
+            }
+
+            client.create(doc).then(() => {
+                router.push('/tracks')
+            });
+
+
+
         }
     }
 
@@ -96,7 +149,7 @@ const Create = () => {
                     </FileUpload>
                 }
                 {activeStep === 2 &&
-                    <FileUpload setFile={setAudio} accept="audio/*">
+                    <FileUpload setFile={onAudioSelected} accept="audio/*">
                         <Button>Загрузить аудио</Button>
                         {
                             audio &&

@@ -1,5 +1,7 @@
+import { Key } from "react";
+
 export interface IComment {
-    _id: string;
+    _key: Key | null | undefined;
     username: string;
     text: string
 }
