@@ -4,12 +4,12 @@ import { Card, Grid, IconButton } from "@mui/material";
 import styles from '../styles/TrackItem.module.scss'
 import { Delete, Pause, PlayArrow } from "@mui/icons-material";
 import { useRouter } from "next/router";
-import { active, pause, set_active, set_pause, set_play } from '@/store/reducers/playerReducer';
+import { active, currentTime, duration, pause, set_active, set_pause, set_play } from '@/store/reducers/playerReducer';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch } from '@/store';
 import { client } from '@/api/client';
 import { fetchTracks } from '@/store/reducers/trackReducer';
-
+import { SecondsToMMSS } from '../utils/SecondsToMMSS'
 interface TrackItemProps {
     track: ITrack;
 }
@@ -17,6 +17,8 @@ interface TrackItemProps {
 const TrackItem: React.FC<TrackItemProps> = ({ track }) => {
     const router = useRouter()
     const activeState = useSelector(active)
+    const currentTimeState = useSelector(currentTime)
+    const durationState = useSelector(duration)
     const pauseState = useSelector(pause)
     const dispatch = useDispatch<AppDispatch>()
     const play = (e: any) => {
@@ -54,7 +56,7 @@ const TrackItem: React.FC<TrackItemProps> = ({ track }) => {
                 <div>{track.name}</div>
                 <div style={{ fontSize: 12, color: 'gray' }}>{track.artist}</div>
             </Grid>
-            {activeState?._id === track?._id && <div>02:42 / 03:22</div>}
+            {activeState?._id === track?._id && <div>{SecondsToMMSS(currentTimeState)} / {SecondsToMMSS(durationState)}</div>}
             <IconButton onClick={deleteTrack} style={{ marginLeft: 'auto' }}>
                 <Delete />
             </IconButton>
